@@ -152,6 +152,9 @@ public abstract class Platform {
             if (type.equals(FileEvents.class)) {
                 return type.cast(new DefaultFileEvents());
             }
+            if (type.equals(Memory.class)) {
+                return type.cast(new DefaultMemory());
+            }
             return super.get(type, nativeLibraryLoader);
         }
     }
