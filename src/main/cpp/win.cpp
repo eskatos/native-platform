@@ -746,4 +746,39 @@ Java_net_rubygrapefruit_platform_internal_jni_WindowsRegistryFunctions_getValueN
     return true;
 }
 
+/**
+ * Memory functions
+ */
+JNIEXPORT void JNICALL
+Java_net_rubygrapefruit_platform_internal_jni_MemoryFunctions_getMemoryInfo(JNIEnv *env, jclass type, jobject dest, jobject result) {
+    jclass destClass = env->GetObjectClass(dest);
+    jmethodID mid = env->GetMethodID(destClass, "details", "(JJ)V");
+    if (mid == NULL) {
+        mark_failed_with_message(env, "could not find method", result);
+        return;
+    }
+
+    #if defined(__CYGWIN__) || defined(__CYGWIN32__)
+	    // New 64-bit MEMORYSTATUSEX isn't available. Use old 32-bit MEMORYSTATUS
+        size_t total_memory;
+        size_t available_memory;
+        MEMORYSTATUS status;
+        status.dwLength = sizeof(status);
+        GlobalMemoryStatus( &status );
+        total_memory = (size_t)status.dwTotalPhys;
+        available_memory = (size_t)status.dwAvailPhys;
+        env->CallVoidMethod(dest, mid, (jlong)total_memory, (jlong)available_memory);
+    #else
+        // Use new 64-bit MEMORYSTATUSEX, not old 32-bit MEMORYSTATUS
+        DWORDLONG total_memory;
+        DWORDLONG available_memory;
+        MEMORYSTATUSEX status;
+        status.dwLength = sizeof(status);
+        GlobalMemoryStatusEx( &status );
+        total_memory = (DWORDLONG)status.ullTotalPhys;
+        available_memory = (DWORDLONG)status.dwAvailPhys;
+        env->CallVoidMethod(dest, mid, (jlong)total_memory, (jlong)available_memory);
+    #endif
+}
+
 #endif
